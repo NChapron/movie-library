@@ -1,8 +1,10 @@
 import React, { useRef } from "react";
+import useHttp from "../hooks/use-http";
 
 import classes from "./AddMovie.module.css";
 
 function AddMovie(props) {
+  const { isLoading, error, sendRequest: sendMovieRequest } = useHttp();
   const titleRef = useRef("");
   const openingTextRef = useRef("");
   const releaseDateRef = useRef("");
@@ -10,16 +12,37 @@ function AddMovie(props) {
   function submitHandler(event) {
     event.preventDefault();
 
-    // could add validation here...
-
     const movie = {
       title: titleRef.current.value,
       openingText: openingTextRef.current.value,
       releaseDate: releaseDateRef.current.value,
     };
 
-    props.onAddMovie(movie);
+    addMovieHandler(movie);
   }
+
+  const createMovie = (movie, movieData) => {
+    console.log("onAdd movie", movieData);
+    const generatedId = movieData.name;
+    const createdMovie = {
+      id: generatedId,
+      ...movie,
+    };
+    console.log(createdMovie);
+    props.onAddMovie(createdMovie);
+  };
+
+  const addMovieHandler = async (movie) => {
+    const response = await sendMovieRequest(
+      {
+        url: "https://react-http-1330c-default-rtdb.europe-west1.firebasedatabase.app/movies.json",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: movie,
+      },
+      createMovie.bind(null, movie)
+    );
+  };
 
   return (
     <form onSubmit={submitHandler}>
